@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>把 CN 讲明白 —— OpenTenBase 协调节点图解卡片</title>
+<style>
+  body {
+    font-family: system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f8fafc; color: #1e293b;
+    margin: 0; padding: 32px 16px;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .sub { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+  .card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 24px 28px; margin-bottom: 20px;
+  }
+  .card h2 { font-size: 17px; margin: 0 0 12px; }
+  .callout {
+    background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 20px; color: #991b1b; font-size: 15px;
+  }
+  .analogy {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+    padding: 14px 18px; margin-top: 12px; font-size: 14px; color: #78350f;
+  }
+  ul { padding-left: 22px; margin: 8px 0; }
+  li { margin: 6px 0; line-height: 1.7; }
+  .src { color: #64748b; font-size: 13px; }
+  .mis { color: #b91c1c; font-weight: 600; }
+  .truth { color: #166534; }
+  details { margin-top: 10px; }
+  pre {
+    background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 8px;
+    font-size: 12px; overflow-x: auto; line-height: 1.6;
+  }
+  .record { color: #94a3b8; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>把 CN 讲明白</h1>
+  <div class="sub">OpenTenBase 分布式数据库 · 图解卡片（题目 2） · 概念：CN（Coordinator Node，协调节点）</div>
+  <div class="sub" style="margin-top:-14px;">小组成员：李佳锐 · 陈钰婵 · 柳雨涵　·　组号：21　·　完成日期：2026 年 11 月 7 日</div>
+
+  <!-- ===================== 主图 ===================== -->
+  <div class="card">
+    <svg viewBox="0 0 1160 700" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CN 协调节点数据流图">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+        </marker>
+        <marker id="arBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+        </marker>
+        <marker id="arGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#059669"/>
+        </marker>
+        <marker id="arPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/>
+        </marker>
+      </defs>
+
+      <!-- ===== 客户端接入 ===== -->
+      <text x="120" y="18" font-size="12" fill="#64748b">客户端接入（Clients）—— 均通过标准 PostgreSQL 协议连接</text>
+      <rect x="120" y="28" width="200" height="56" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+      <text x="220" y="61" font-size="14" fill="#1e293b" text-anchor="middle">psql / 业务应用</text>
+      <rect x="350" y="28" width="190" height="56" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+      <text x="445" y="61" font-size="14" fill="#1e293b" text-anchor="middle">JDBC / DBeaver</text>
+
+      <!-- SQL 下行 / 结果上行 -->
+      <line x1="445" y1="86" x2="445" y2="134" stroke="#2563eb" stroke-width="2" marker-end="url(#arBlue)"/>
+      <text x="457" y="106" font-size="12" fill="#2563eb">SQL 请求</text>
+      <line x1="520" y1="134" x2="520" y2="88" stroke="#2563eb" stroke-width="2" marker-end="url(#arBlue)" stroke-dasharray="5,4"/>
+      <text x="532" y="128" font-size="12" fill="#2563eb">结果汇总返回</text>
+
+      <!-- ===== CN ===== -->
+      <rect x="70" y="140" width="620" height="270" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+      <text x="90" y="168" font-size="15" font-weight="bold" fill="#1d4ed8">CN（Coordinator Node）· 协调节点集群</text>
+      <text x="90" y="188" font-size="11" fill="#64748b">src/backend/pgxc/</text>
+      <rect x="455" y="150" width="222" height="28" rx="14" fill="#fef2f2" stroke="#dc2626"/>
+      <text x="566" y="169" font-size="12" fill="#dc2626" text-anchor="middle">只存元数据，不存业务数据</text>
+
+      <!-- CN 三步 -->
+      <rect x="90" y="205" width="185" height="105" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+      <text x="182" y="238" font-size="13" font-weight="bold" fill="#1e3a8a" text-anchor="middle">① SQL 解析与重写</text>
+      <text x="182" y="260" font-size="12" fill="#475569" text-anchor="middle">Parser</text>
+      <text x="182" y="284" font-size="11" fill="#64748b" text-anchor="middle" font-family="Consolas, monospace">gram.y · RewriteHandler</text>
+
+      <line x1="277" y1="257" x2="287" y2="257" stroke="#475569" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="290" y="205" width="185" height="105" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+      <text x="382" y="238" font-size="13" font-weight="bold" fill="#1e3a8a" text-anchor="middle">② 分布式查询规划</text>
+      <text x="382" y="260" font-size="12" fill="#475569" text-anchor="middle">Planner · 分片路由</text>
+      <text x="382" y="284" font-size="11" fill="#64748b" text-anchor="middle" font-family="Consolas, monospace">pgxcplanner.c</text>
+
+      <line x1="477" y1="257" x2="487" y2="257" stroke="#475569" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="490" y="205" width="182" height="105" rx="8" fill="#ffffff" stroke="#93c5fd"/>
+      <text x="581" y="238" font-size="13" font-weight="bold" fill="#1e3a8a" text-anchor="middle">③ 执行与下推</text>
+      <text x="581" y="260" font-size="12" fill="#475569" text-anchor="middle">Executor</text>
+      <text x="581" y="284" font-size="11" fill="#64748b" text-anchor="middle" font-family="Consolas, monospace">execRemote.c · squeue.c</text>
+
+      <!-- CN 第 4 模块 -->
+      <rect x="90" y="325" width="582" height="60" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-dasharray="4,3"/>
+      <text x="110" y="350" font-size="13" font-weight="bold" fill="#1e3a8a">④ 连接池与 GTM 客户端（poolmgr.c · gtm.c）</text>
+      <text x="110" y="372" font-size="12" fill="#475569">代表 CN 向 GTM 申请全局事务号、获取全局一致性快照</text>
+
+      <!-- ===== GTM ===== -->
+      <rect x="790" y="140" width="300" height="170" rx="12" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+      <text x="810" y="168" font-size="15" font-weight="bold" fill="#6d28d9">GTM（全局事务管理器）</text>
+      <text x="810" y="186" font-size="11" fill="#64748b">src/gtm/</text>
+      <text x="810" y="214" font-size="13" font-weight="bold" fill="#4c1d95">全局事务号与快照中心</text>
+      <text x="810" y="236" font-size="12" fill="#475569">64-bit GXID（gtm_txn.c）</text>
+      <text x="810" y="256" font-size="12" fill="#475569">全局一致性快照（MVCC）</text>
+      <text x="810" y="280" font-size="11" fill="#64748b">GTM-Proxy（连接复用 / 批处理代理）</text>
+      <text x="810" y="297" font-size="11" fill="#64748b">减少 CN 与 GTM 主节点的高并发直连</text>
+
+      <!-- CN <-> GTM 双向 -->
+      <line x1="692" y1="210" x2="784" y2="210" stroke="#7c3aed" stroke-width="2" marker-end="url(#arPurple)"/>
+      <text x="738" y="200" font-size="11" fill="#7c3aed" text-anchor="middle">申请 GXID</text>
+      <line x1="790" y1="248" x2="698" y2="248" stroke="#7c3aed" stroke-width="2" marker-end="url(#arPurple)" stroke-dasharray="5,4"/>
+      <text x="738" y="266" font-size="11" fill="#7c3aed" text-anchor="middle">返回全局快照</text>
+
+      <!-- CN -> DN -->
+      <line x1="235" y1="412" x2="235" y2="484" stroke="#059669" stroke-width="2" marker-end="url(#arGreen)"/>
+      <line x1="585" y1="412" x2="585" y2="484" stroke="#059669" stroke-width="2" marker-end="url(#arGreen)"/>
+      <line x1="932" y1="412" x2="932" y2="484" stroke="#059669" stroke-width="2" marker-end="url(#arGreen)"/>
+      <text x="610" y="452" font-size="12" fill="#047857">下发算子 · 收回各分片结果</text>
+
+      <!-- ===== DN ===== -->
+      <rect x="55" y="470" width="1050" height="215" rx="12" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="75" y="496" font-size="14" font-weight="bold" fill="#047857">DN（DataNode）· 数据存储与执行节点集群 —— 数据按分片（Shard）存放在这里，并在本地执行</text>
+
+      <rect x="75" y="510" width="320" height="155" rx="8" fill="#ffffff" stroke="#6ee7b7"/>
+      <text x="95" y="538" font-size="14" font-weight="bold" fill="#065f46">DN 1（Master / Standby）</text>
+      <text x="95" y="564" font-size="12" fill="#334155">分片 Shard 0 – 4095</text>
+      <text x="95" y="586" font-size="12" fill="#334155">本地 PG 内核 · 本地 WAL</text>
+      <text x="95" y="608" font-size="12" fill="#334155">MVCC 可见性</text>
+
+      <rect x="425" y="510" width="320" height="155" rx="8" fill="#ffffff" stroke="#6ee7b7"/>
+      <text x="445" y="538" font-size="14" font-weight="bold" fill="#065f46">DN 2（Master / Standby）</text>
+      <text x="445" y="564" font-size="12" fill="#334155">分片 Shard 4096 – 8191</text>
+      <text x="445" y="586" font-size="12" fill="#334155">算子并行下推 · 索引加速</text>
+      <text x="445" y="608" font-size="12" fill="#334155">向量近邻检索</text>
+
+      <rect x="775" y="510" width="315" height="155" rx="8" fill="#ffffff" stroke="#6ee7b7"/>
+      <text x="795" y="538" font-size="14" font-weight="bold" fill="#065f46">DN N（弹性水平扩展）</text>
+      <text x="795" y="564" font-size="12" fill="#334155">扩容时数据平滑迁移</text>
+      <text x="795" y="586" font-size="12" fill="#334155">多副本流复制 · 故障自动切换</text>
+    </svg>
+  </div>
+
+  <div class="callout">
+    <b>看图先看这一点：</b>CN 不保存<b>实际的业务数据</b>，只保存系统的<b>全局元数据</b>——业务数据全部分片（Shard）放在 DN 里。所以 CN 干的只有四件事：<b>接单（解析）→ 排活（规划路由）→ 派活（下推执行）→ 收活（汇总结果）</b>。
+  </div>
+
+  <!-- ===================== 一句话解释 ===================== -->
+  <div class="card">
+    <h2>一句话解释</h2>
+    <p style="line-height:1.9; margin:0;">
+      CN 是 OpenTenBase 集群的<b>协调节点</b>。业务永远连到 CN：客户端用标准 PostgreSQL 协议把 SQL 发给它，它先解析重写这条语句，再由规划器判断这条 SQL 涉及哪些分片（分片路由），把查询切成片段下推给对应的 DN 本地并发执行，最后把各 DN 返回的结果汇总成最终答案交回客户端。CN 和 DN <b>共用同一套 schema</b>，所以 CN 不需要持有业务数据就能完成解析与规划——它只保存系统的<b>全局元数据</b>（官方文档原话：「CN 上只存储系统的全局元数据，并不存储实际的业务数据」）。CN 也不独自管理事务的全局秩序：全局事务号和一致性快照由 GTM 统一分配，CN 通过连接池模块（poolmgr.c / gtm.c）向 GTM 申请。对外的 CN 不是一个节点，而是多台<b>位置对等</b>的协调节点组成的集群，每个 CN 都提供相同的数据库视图。
+    </p>
+  </div>
+
+  <!-- ===================== 类比 ===================== -->
+  <div class="card">
+    <h2>生活类比（只映射结构，不要外推）</h2>
+    <div class="analogy">
+      CN 像一个<b>项目经理</b>：客户提需求（SQL 进来），项目经理看懂需求（① 解析）、判断这件事要找哪些人做（② 规划路由）、把任务拆给对应的开发（③ 下推给 DN），最后把大家的产出拼成完整交付（汇总结果）。而「给每个任务编全局唯一号、保证大家看到的是同一份进度」（GXID 与全局快照）由另一个角色——GTM——负责，项目经理只是去它那里领号。
+      <br><b>边界声明：</b>类比到此为止。项目经理会不会请假、忙不过来怎么办，属于高可用问题，本项目文档未在此展开，<b>不要从类比里推出任何关于故障或性能的结论</b>。
+    </div>
+  </div>
+
+  <!-- ===================== 常见误解 ===================== -->
+  <div class="card">
+    <h2>常见误解</h2>
+    <ul>
+      <li><span class="mis">误解一：「CN 是主库，业务数据存在 CN 上。」</span><br>
+        <span class="truth">不对。</span>业务数据的分片存放在 DN 上（如 Shard 0–4095、4096–8191……）；CN 只保存系统的<b>全局元数据</b>，不保存实际的业务数据。</li>
+      <li><span class="mis">误解二：「CN 是一台机器。」</span><br>
+        <span class="truth">不对。</span>CN 是协调节点<b>集群</b>，多个节点位置对等，每个节点都提供相同的数据库视图。</li>
+      <li><span class="mis">误解三：「CN 自己管事务。」</span><br>
+        <span class="truth">不对。</span>全局事务号与全局一致性快照由 GTM 统一管理与分配，CN 只是 GTM 的客户端。</li>
+      <li><span class="mis">误解四：「算都得拿回 CN 做，DN 只负责存。」</span><br>
+        <span class="truth">不对。</span>执行算子会下推到 DN 本地并发执行（算子并行下推、索引加速），CN 只收拢结果。</li>
+    </ul>
+  </div>
+
+  <!-- ===================== 参考资料 + 出处对照 ===================== -->
+  <div class="card">
+    <h2>项目文档参考链接</h2>
+    <ul>
+      <li>OpenTenBase 官方开源仓库（README · Overview）：<br>
+        <a href="https://github.com/OpenTenBase/OpenTenBase" target="_blank" rel="noopener">https://github.com/OpenTenBase/OpenTenBase</a></li>
+      <li>OpenTenBase 官方文档 · 快速入门（三大模块 CN / DN / GTM 的职责解读）：<br>
+        <a href="https://www.opentenbase.org/blog/01-quickstart" target="_blank" rel="noopener">https://www.opentenbase.org/blog/01-quickstart</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>出处对照（每条表述 → 原文）</h2>
+    <p class="src" style="margin:0 0 12px;">来源分三级：【官方文档】= 官网快速入门；【仓库 README】= GitHub 仓库首页；【架构图】= 项目《分布式数据库内核架构全景图》（本次现场拍摄，用于补充实现细节）。</p>
+
+    <p style="margin:0 0 4px;"><b>1. CN 不存业务数据，只存全局元数据</b> ——【官方文档】</p>
+    <p class="src" style="margin:0 0 12px; color:#475569;">原文：「在功能上 CN 上只存储系统的全局元数据，并不存储实际的业务数据。」<br>
+      同义英文表述见【仓库 README】：「the CoordinateNode contains only metadata」「All user data resides in the DataNode」。</p>
+
+    <p style="margin:0 0 4px;"><b>2. 用户的 SQL 总是发给 CN，由 CN 切分、下发、汇总</b> ——【仓库 README】</p>
+    <p class="src" style="margin:0 0 12px; color:#475569;">原文：「Users always connect to the CoordinateNodes, which divides up the query into fragments that are executed in the DataNodes, and collects the results.」<br>
+      同段另有：「The CoordinateNodes and DataNodes share the same schema.」（对应卡片中「CN 与 DN 共用同一套 schema」一句）</p>
+
+    <p style="margin:0 0 4px;"><b>3. CN 是多个位置对等的节点，视图一致</b> ——【官方文档】</p>
+    <p class="src" style="margin:0 0 12px; color:#475569;">原文：「多个节点位置对等，每个节点都提供相同的数据库视图。」</p>
+
+    <p style="margin:0 0 4px;"><b>4. DN 存业务数据分片，并执行 CN 分发的请求</b> ——【官方文档】</p>
+    <p class="src" style="margin:0 0 12px; color:#475569;">原文：「每个节点还存储业务数据的分片……DN 节点负责完成执行协调节点分发的执行请求。」</p>
+
+    <p style="margin:0 0 4px;"><b>5. GTM 管理集群事务信息与全局对象</b> ——【官方文档】</p>
+    <p class="src" style="margin:0 0 12px; color:#475569;">原文：「GTM：全局事务管理器（Global Transaction Manager）负责管理集群事务信息，同时管理集群的全局对象，比如序列等。」</p>
+
+    <p style="margin:0 0 4px;"><b>6. CN 的四大模块与源码路径、CN↔GTM 的 GXID / 快照交互、算子并行下推、分片区间</b> ——【架构图】</p>
+    <p class="src" style="margin:0 0 0; color:#475569;">
+      分别对应图中 CN 区（src/backend/pgxc/：Parser / Planner / Executor / poolmgr.c·gtm.c）、CN↔GTM 箭头标注「申请GXID / 返回快照」、DN 区「分布式分片数据存储（Shards / Group）· 本地并发执行」「算子并行下推」及 DN 1「Shard 0–4095」/ DN 2「Shard 4096–8191」。</p>
+
+    <p class="src" style="margin-top:14px;">⚠ 口径说明：架构图为现场翻拍，属于第 6 条的唯一来源，其中「2PC 两阶段提交协调」「Oracle 兼容」「全局序列 / GTS」「GTM-Proxy」等细节本卡片<b>未展开</b>，未作任何超出图面的推论；前 5 条均有官方文档或仓库 README 原文支撑。</p>
+  </div>
+
+  <!-- ===================== Mermaid 备用版 ===================== -->
+  <div class="card">
+    <h2>备用：Mermaid 版（可直接粘贴到支持 Mermaid 的文档）</h2>
+    <details>
+      <pre>flowchart TD
+    C["客户端：psql / JDBC（标准 PostgreSQL 协议）"] -->|SQL 请求| CN
+    subgraph CN["CN 协调节点集群（src/backend/pgxc/）—— 不存数据"]
+        A["① SQL 解析与重写 Parser"] --> B["② 分布式查询规划 Planner（分片路由）"]
+        B --> E["③ 执行与下推 Executor"]
+        G["④ 连接池与 GTM 客户端 poolmgr.c / gtm.c"]
+    end
+    CN <-->|申请 GXID / 返回全局快照| GTM["GTM 全局事务管理器（src/gtm/）：64-bit GXID · 全局一致性快照"]
+    E -->|下发算子| DN
+    DN -->|返回分片结果| CN
+    subgraph DN["DN 数据节点集群 —— 数据按 Shard 存放并本地执行"]
+        D1["DN 1：Shard 0-4095"] 
+        D2["DN 2：Shard 4096-8191"]
+        D3["DN N：弹性扩展"]
+    end</pre>
+    </details>
+  </div>
+
+</div>
+</body>
+</html>
